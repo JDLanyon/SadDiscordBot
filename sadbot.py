@@ -6,8 +6,9 @@ import json
 
 # admin list
 admins = json.load(open("private.json", 'r'))["admins"] # change to a list of user ids.
+moderators = json.load(open("private.json", 'r'))["moderators"]
 
-client = commands.Bot(command_prefix = ":(", case_sensitive = True)
+client = commands.Bot(command_prefix = ":(", case_sensitive = False)
 
 
 @client.event
@@ -37,7 +38,9 @@ async def on_message(message):
 
     # if someone says sex it's funny.
     if "sex" in str(message.content).lower():
-        await message.channel.send("haha ***S H E X***")
+        await message.channel.send("haha ***SEX***")
+    if "69" in str(message.content).lower():
+        await message.channel.send("hehe 69")
 
     # don't say words (shut down messages relating to affection)
     with open("data.json", 'r') as f:
@@ -94,23 +97,99 @@ async def roast(ctx, user=None):
     await ctx.send(response)
 
 
-# OWNER ONLY
+# ADMINS AND MODS ONLY
 
 # Get list of connected servers
-@client.command()
-async def servers(ctx):
-    if ctx.author.id != admins[0]:
-        await ctx.send("You can't do that, only the owner can do that.")
+@client.command(name="servers", aliases=["serverlist"])
+async def Servers(ctx):
+    if not(ctx.author.id in admins or ctx.author.id in moderators): # only admins and mods
+        await ctx.send("You can't do that, only the bot admins / moderators can do that.")
         return
     await ctx.send(f"Connected on {str(len(client.guilds))} servers:")
     await ctx.send('\n'.join(server.name for server in client.guilds))
 
+# Get list of moderators
+@client.command(name="moderators", aliases=["modlist"])
+async def Terminate(ctx):
+    if not(ctx.author.id in admins or ctx.author.id in moderators): # only admins and mods
+        await ctx.send("You can't do that, only the bot admins / moderators can do that.")
+        return
+    modlist = ""
+    for member in moderators:
+        try:
+            modlist += f"{client.get_user(member)} ({member})\n"
+        except:
+            modlist += f"{member} (couldn't find user.)\n"
+    await ctx.send(modlist)
 
+
+# ADMINS ONLY
+
+@client.command(name="addmod")
+async def AddMod(ctx, id):
+    if not(ctx.author.id in admins):
+        await ctx.send("You can't do that, only the bot admins can do that.")
+        return
+
+    # for @ mentions
+    if id[0] == '<':
+        id = id[3:-1]
+        print(id)
+    try:
+        # check if they're already a mod
+        if int(id) in moderators:
+            await ctx.send(f"{id} is already found in the moderator list.")
+            return
+        # add to mod list
+        moderators.append(int(id)) # add client id
+    except:
+        await ctx.send("Invalid client id.")
+        return
+    # replace json with added moderator.
+    f = open("private.json", "r")
+    data = json.load(f)
+    f.close()
+    data["moderators"] = moderators
+    f = open("private.json", "w")
+    json.dump(data, f, indent=4)
+    f.close()
+    await ctx.send(f"Successfuly added {id}.")
+
+@client.command(name="removemod")
+async def removemod(ctx, id):
+    if not (ctx.author.id in admins):
+        await ctx.send("You can't do that, only the bot admins can do that.")
+        return
+
+    # for @ mentions
+    if id[0] == '<':
+        id = id[3:-1]
+        print(id)
+    try:
+        # check if they're in the mod list
+        if not(int(id) in moderators):
+            await ctx.send(f"{id} is not found in the moderator list.")
+            return
+        moderators.remove(int(id))
+    except:
+        await ctx.send("Something went wrong, DM Sausytime#6969.")
+        return
+    # replace json with added moderator.
+    f = open("private.json", "r")
+    data = json.load(f)
+    f.close()
+    data["moderators"] = moderators
+    f = open("private.json", "w")
+    json.dump(data, f, indent=4)
+    f.close()
+    await ctx.send(f"Successfuly removed {id}.")
+
+# OWNER ONLY
 # Terminate the bot via command
 @client.command(name="terminate", aliases=["off", "disconnect"])
 async def terminate(ctx):
     if ctx.author.id != admins[0]:
-        await ctx.send("You can't terminate the bot, only the owner can.")
+        await ctx.send("You can't terminate the bot, only the bot owner can.")
         return
     await ctx.send("k np, bye.")
     exit()

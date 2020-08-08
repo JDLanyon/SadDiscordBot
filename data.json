@@ -1,10 +1,11 @@
 {
+    "twitchchannels" : ["sausytime"],
     "shutdowns" : {
         "blacklist" :
         [
             "love", "adore", "happy", "girlfriend", "romance", "relationship", "hug", "kiss", "joy",
             "hearing her voice", "onto your shoulder", "on your shoulder", "being with her", "body", "skin", "touch",
-            "feeling", "feel good"
+            "feeling", "feel good", "girl"
         ],
         "responses" :
         [
@@ -13,7 +14,7 @@
             ":middle_finger:", "I will actually deep throat you.", "That makes me Dx",
             "Do you want an opioid overdose?", "I can and will suck you tit.", "***STOP***",
             "Why do I have to deal with your shit?", "Why can't we be more family-friendly and not have you here?",
-            ":(", "***SCREAMS IN VIETNAMESE***", "*bits lip*"
+            ":(", "***SCREAMS IN VIETNAMESE***", "*bites lip*"
         ]
     },
     "insults" :
