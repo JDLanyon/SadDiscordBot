@@ -3,6 +3,7 @@ import discord.emoji
 from discord.ext import tasks, commands
 import random
 import json
+import os
 
 # admin list
 admins = json.load(open("private.json", 'r'))["admins"] # change to a list of user ids.
@@ -17,7 +18,7 @@ async def on_ready():
     print("Bot online.")
 
 
-# on messages
+# ON MESSAGES
 @client.event
 async def on_message(message):
     # avoid reponding to the bot's own messages
@@ -31,7 +32,7 @@ async def on_message(message):
         # send responses to big boi users
         for admin_id in admins:
             user = client.get_user(int(admin_id))
-            await user.send('`' + str(message.author.name) + " -> bot:` " + str(message.content))
+            await user.send(f"` {message.author.name} ({message.author.id}) -> bot:` " + str(message.content))
 
     # print to terminal
     print(str(message.author.name) + " -> bot: " + str(message.content))
@@ -69,16 +70,26 @@ async def msg(ctx, target, text):
     # try to get the user id and send a message
     try:
         # print neato magneto bot sending context in terminal
-        print("bot -> " + str(client.get_user(int(target)).name) + ": " + text)
-        await ctx.send("`bot -> " + str(client.get_user(int(target)).name) + "`: " + text)
+        if target[0] == '<': # make sure target is only the client id.
+            target = target[3:-1]
+        user = client.get_user(int(target))
+        print("bot -> " + str(user.name) + ": " + text)
+        await ctx.send("`bot -> " + str(user.name) + "`: " + text)
 
         # send text to the person with *id*
-        user = client.get_user(int(target))
         await user.send(text)
 
-    # if not, say you can't.
     except AttributeError:
-        await ctx.send("The user must share a discord with the bot in order to be messaged sadly.")
+        try:
+            # try with fetch_user
+            user = await client.fetch_user(int(target))
+            print("bot -> " + str(user.name) + ": " + text)
+            await ctx.send("`bot -> " + str(user.name) + "`: " + text)
+            # send text to the person with *id*
+            await user.send(text)
+
+        except AttributeError:
+            await ctx.send("Could not find that user sadly.")
 
 
 @client.command(name="roast", aliases=["insult"])
@@ -98,6 +109,17 @@ async def roast(ctx, user=None):
 
 
 # ADMINS AND MODS ONLY
+
+
+# Shut down my PC
+@client.command(name="shutdown")
+async def ShutDown(ctx):
+    if not(ctx.author.id in admins): # only admins and mods
+        await ctx.send("You can't do that, only the bot admins / moderators can do that.")
+        return
+    await ctx.send("**SHUTTING DOWN YOUR PC**")
+    os.system("shutdown /s /t 1")
+
 
 # Get list of connected servers
 @client.command(name="servers", aliases=["serverlist"])
@@ -193,6 +215,36 @@ async def terminate(ctx):
         return
     await ctx.send("k np, bye.")
     exit()
+
+@client.command(name="addadmin")
+async def AddAdmin(ctx, id):
+    if not(ctx.author.id in admins[0]):
+        await ctx.send("You can't do that, only the bot owner can do that.")
+        return
+
+    # for @ mentions
+    if id[0] == '<':
+        id = id[3:-1]
+        print(id)
+    try:
+        # check if they're already a mod
+        if int(id) in admins:
+            await ctx.send(f"{id} is already found in the admin list.")
+            return
+        # add to mod list
+        moderators.append(int(id)) # add client id
+    except:
+        await ctx.send("Invalid client id.")
+        return
+    # replace json with added moderator.
+    f = open("private.json", "r")
+    data = json.load(f)
+    f.close()
+    data["admins"] = admins
+    f = open("private.json", "w")
+    json.dump(data, f, indent=4)
+    f.close()
+    await ctx.send(f"Successfuly added {id}.")
 
 
 token = json.load(open("private.json", 'r'))["token"]
